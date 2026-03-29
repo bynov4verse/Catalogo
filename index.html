@@ -908,9 +908,13 @@ function enviarWA(mode){
   const fecha_hoy=new Date().toLocaleDateString("es-VE",{day:"2-digit",month:"2-digit",year:"numeric"});
   const descDigital=esCripto(pago)?0.10:0;
 
-  const bsLine = (pago.startsWith("Bs") && pago.includes("Pago"))
-    ? (()=>{ const t=parseFloat(document.getElementById(mode==="i"?"ri-total":mode==="c"?"rc-total":"rr-total").textContent.replace("$",""))||0; const tasaUsada=TASA_BCV>1?TASA_BCV:468.51; return "\n🇻🇪 *Equivalente en Bs:* Bs. "+(t*tasaUsada).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2})+" (BCV "+tasaUsada.toFixed(2)+")"; })()
-    : "";
+  function calcBsLine(montoStr){
+    if(!pago.startsWith("Bs")||!pago.includes("Pago")) return "";
+    const t = parseFloat(montoStr.replace("$",""))||0;
+    const tasaUsada = TASA_BCV>1?TASA_BCV:468.51;
+    const bs = (t*tasaUsada).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});
+    return "\n\uD83C\uDDFB\uD83C\uDDEA *Equivalente en Bs:* Bs. "+bs+" (BCV "+tasaUsada.toFixed(2)+")";
+  }
   if(mode==="i"){
     const svc=document.getElementById("servicio").value;
     if(!svc){alert("Por favor selecciona un servicio.");return}
@@ -944,7 +948,7 @@ ${linea}
 ⏱ *Duración:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 🔢 *Cantidad:* ${qtyI}
 ${linea}
-💰 *Total estimado:* ${total}${bsLine}
+💰 *Total estimado:* ${total}${calcBsLine(total)}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Quedo en espera para proceder con el pago.
@@ -970,7 +974,7 @@ ${linea}
 📆 *Fecha de vencimiento:* ${fecha||"no indicada"}
 ⏱ *Renovación:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 ${linea}
-💰 *Total estimado:* ${total}${bsLine}
+💰 *Total estimado:* ${total}${calcBsLine(total)}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Solicito renovación antes del vencimiento.
@@ -997,7 +1001,7 @@ ${detalleItems}
 ⏱ *Duración:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 🔢 *Cantidad:* ${qtyC}
 ${linea}
-💰 *Total estimado:* ${total}${bsLine}
+💰 *Total estimado:* ${total}${calcBsLine(total)}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Quedo en espera para proceder con el pago.
@@ -1018,7 +1022,7 @@ ${detalleItems}
 ⏱ *Duración:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 🔢 *Cantidad:* ${qtyC}
 ${linea}
-💰 *Total estimado:* ${total}${bsLine}
+💰 *Total estimado:* ${total}${calcBsLine(total)}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Quedo en espera para proceder con el pago.
@@ -1422,4 +1426,4 @@ renderCustomItems();
 cargarTasas();
 </script>
 </body>
-</html>
+  </html>

@@ -900,7 +900,7 @@ function enviarWA(mode){
   const apellido=document.getElementById("apellido").value.trim();
   if(!nombre||!apellido){alert("Por favor ingresa tu nombre y apellido.");return}
 
-  const pago=mode==="i"?pagoI:pagoC;
+  const pago=mode==="i"?pagoI:mode==="r"?pagoR:pagoC;
   if(!pago){alert("Por favor selecciona un método de pago.");return}
 
   let msg="";

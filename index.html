@@ -421,7 +421,7 @@ select option{background:#1a1a2e;color:var(--text)}
       <div class="renew-title">Renovar servicio activo</div>
       <p class="renew-sub">Indica tu servicio actual y tu fecha de vencimiento. Te contactamos para renovar sin interrupciones.</p>
 
-      <select id="renew-servicio" onchange="calcularRenew()">
+      <select id="renew-servicio" onchange="actualizarOpcionesRenew()">
         <option value="">— Servicio a renovar —</option>
         <option value="Netflix">Netflix</option>
         <option value="Disney+">Disney+</option>
@@ -439,16 +439,27 @@ select option{background:#1a1a2e;color:var(--text)}
       </select>
       <select id="renew-opcion" onchange="calcularRenew()" style="display:none"></select>
 
-      <div class="venc-row" style="margin-top:.2rem">
-        <input type="date" id="renew-fecha" onchange="calcularRenew()" style="color:var(--text-muted)">
-        <select id="renew-tiempo" onchange="calcularRenew()">
-          <option value="1">Renovar 1 mes</option>
-          <option value="2">Renovar 2 meses</option>
-          <option value="3">Renovar 3 meses — 10% off</option>
-          <option value="6">Renovar 6 meses — 15% off</option>
-          <option value="12">Renovar 12 meses — 20% off</option>
-        </select>
+      <div style="margin-bottom:.55rem">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem">fecha de vencimiento</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.55rem">
+          <select id="renew-fecha-d" onchange="armarFecha()" style="margin-bottom:0;text-align:center">
+            <option value="">Día</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option>
+          </select>
+          <select id="renew-fecha-m" onchange="armarFecha()" style="margin-bottom:0;text-align:center">
+            <option value="">Mes</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          </select>
+          <select id="renew-fecha-a" onchange="armarFecha()" style="margin-bottom:0;text-align:center">
+            <option value="">Año</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+          </select>
+        </div>
       </div>
+      <select id="renew-tiempo" onchange="calcularRenew()">
+        <option value="1">Renovar 1 mes</option>
+        <option value="2">Renovar 2 meses</option>
+        <option value="3">Renovar 3 meses — 10% off</option>
+        <option value="6">Renovar 6 meses — 15% off</option>
+        <option value="12">Renovar 12 meses — 20% off</option>
+      </select>
       <div class="renew-alert" id="renew-alert"></div>
     </div>
 
@@ -957,7 +968,10 @@ ${linea}
   } else if(mode==="r"){
     const svc=document.getElementById("renew-servicio").value;
     const opt=document.getElementById("renew-opcion").value;
-    const fecha=document.getElementById("renew-fecha").value;
+    const _fd=document.getElementById("renew-fecha-d").value;
+    const _fm=document.getElementById("renew-fecha-m").value;
+    const _fa=document.getElementById("renew-fecha-a").value;
+    const fecha=(_fd&&_fm&&_fa)?_fd+"/"+_fm+"/"+_fa:"no indicada";
     const meses=document.getElementById("renew-tiempo").value;
     const total=document.getElementById("rr-total").textContent;
     if(!svc){alert("Por favor selecciona el servicio a renovar.");return}
@@ -1180,69 +1194,82 @@ function calcBs(mode){
 // ── RENOVACIÓN ─────────────────────────────────────────────
 let pagoR = "";
 
-function calcularRenew(){
-  const svc = document.getElementById("renew-servicio").value;
-  const optSel = document.getElementById("renew-opcion");
+function armarFecha(){ calcularRenew(); }
+
+function actualizarOpcionesRenew(){
+  const svc      = document.getElementById("renew-servicio").value;
+  const optSel   = document.getElementById("renew-opcion");
   const pagoStep = document.getElementById("renew-pago-step");
-  const resumen = document.getElementById("resumen-r");
-  const alert = document.getElementById("renew-alert");
-
-  optSel.innerHTML = '<option value="">— Elige una opción —</option>';
-  optSel.style.display = "none";
+  const resumen  = document.getElementById("resumen-r");
+  const alertEl  = document.getElementById("renew-alert");
+  optSel.innerHTML = '<option value="">\u2014 Elige una opci\u00f3n \u2014</option>';
+  optSel.style.display  = "none";
   pagoStep.style.display = "none";
-  resumen.style.display = "none";
-  alert.style.display = "none";
-
+  resumen.style.display  = "none";
+  alertEl.style.display  = "none";
   if(!svc) return;
   const opts = PRECIOS[svc];
   if(!opts) return;
   opts.forEach(o=>{
     const op = document.createElement("option");
     op.value = o.label;
-    op.textContent = o.label+" — $"+o.precio.toFixed(2)+(o.fijo?"":" /mes");
+    op.textContent = o.label + " \u2014 $" + o.precio.toFixed(2) + (o.fijo ? "" : " /mes");
     optSel.appendChild(op);
   });
   optSel.style.display = "block";
+}
+
+function calcularRenew(){
+  const svc      = document.getElementById("renew-servicio").value;
+  const optSel   = document.getElementById("renew-opcion");
+  const pagoStep = document.getElementById("renew-pago-step");
+  const resumen  = document.getElementById("resumen-r");
+  const alertEl  = document.getElementById("renew-alert");
+  alertEl.style.display = "none";
+  if(!svc){ pagoStep.style.display="none"; resumen.style.display="none"; return; }
   pagoStep.style.display = "block";
-
-  const opt = opts.find(o=>o.label===optSel.value);
+  const opts = PRECIOS[svc];
+  const opt  = opts ? opts.find(o=>o.label===optSel.value) : null;
   const meses = parseInt(document.getElementById("renew-tiempo").value)||1;
-  const fecha = document.getElementById("renew-fecha").value;
-
-  // alerta de vencimiento
-  if(fecha){
-    const hoy = new Date();
-    const venc = new Date(fecha);
+  // Leer fecha de los 3 selects
+  const fd = document.getElementById("renew-fecha-d").value;
+  const fm = document.getElementById("renew-fecha-m").value;
+  const fa = document.getElementById("renew-fecha-a").value;
+  const fechaISO = (fd&&fm&&fa) ? fa+"-"+fm+"-"+fd : "";
+  const fechaLeg = (fd&&fm&&fa) ? fd+"/"+fm+"/"+fa : "";
+  // Alerta de vencimiento
+  if(fechaISO){
+    const hoy  = new Date();
+    const venc = new Date(fechaISO);
     const diff = Math.ceil((venc-hoy)/(1000*60*60*24));
     if(diff<=3&&diff>=0){
-      alert.textContent = "⚠️ Tu servicio vence en "+diff+" día(s). ¡Renueva pronto!";
-      alert.style.display = "block";
+      alertEl.textContent = "\u26a0\ufe0f Tu servicio vence en "+diff+" d\u00eda(s). \u00a1Renueva pronto!";
+      alertEl.style.display = "block";
     } else if(diff<0){
-      alert.textContent = "⚠️ Este servicio ya venció hace "+Math.abs(diff)+" día(s). Renueva ahora para reactivarlo.";
-      alert.style.display = "block";
+      alertEl.textContent = "\u26a0\ufe0f Este servicio ya venci\u00f3 hace "+Math.abs(diff)+" d\u00eda(s). Renueva ahora para reactivarlo.";
+      alertEl.style.display = "block";
     }
   }
-
-  if(!opt) return;
-  const desc = DESCUENTOS[meses]||0;
+  if(!opt){ resumen.style.display="none"; return; }
+  const desc       = DESCUENTOS[meses]||0;
   const descCripto = esCripto(pagoR)?0.10:0;
-  const baseTotal = opt.precio*meses;
-  const total = baseTotal*(1-desc)*(1-descCripto);
-  const ahorro = baseTotal-total;
-
-  document.getElementById("rr-svc").textContent = svc;
-  document.getElementById("rr-opt").textContent = opt.label;
-  document.getElementById("rr-fecha").textContent = fecha||"no indicada";
-  document.getElementById("rr-tiempo").textContent = meses+" mes"+(meses===1?"":"es")+(desc>0?" · "+Math.round(desc*100)+"% off":"");
-  document.getElementById("rr-total").textContent = "$"+total.toFixed(2);
+  const baseTotal  = opt.precio*meses;
+  const total      = baseTotal*(1-desc)*(1-descCripto);
+  const ahorro     = baseTotal-total;
+  const descLabel  = [];
+  if(desc>0)       descLabel.push(Math.round(desc*100)+"% off meses");
+  if(descCripto>0) descLabel.push("10% digital");
+  document.getElementById("rr-svc").textContent    = svc;
+  document.getElementById("rr-opt").textContent    = opt.label;
+  document.getElementById("rr-fecha").textContent  = fechaLeg||"no indicada";
+  document.getElementById("rr-tiempo").textContent = meses+" mes"+(meses===1?"":"es")+(descLabel.length?" \u00b7 "+descLabel.join(" + "):"");
+  document.getElementById("rr-total").textContent  = "$"+total.toFixed(2);
   const ahorroEl = document.getElementById("rr-ahorro");
-  if(ahorro>0.01){ahorroEl.style.display="inline-flex";document.getElementById("rr-ahorro-val").textContent="$"+ahorro.toFixed(2)}
+  if(ahorro>0.01){ahorroEl.style.display="inline-flex";document.getElementById("rr-ahorro-val").textContent="$"+ahorro.toFixed(2);}
   else ahorroEl.style.display="none";
-  resumen.style.display = "block";
-
-  // reset bs calc
-  const bsEl = document.getElementById("bs-result-r");
-  if(bsEl){bsEl.textContent="";bsEl.classList.remove("show")}
+  resumen.style.display="block";
+  const bsEl=document.getElementById("bs-result-r");
+  if(bsEl){bsEl.textContent="";bsEl.classList.remove("show");}
 }
 
 // ── FAQ ─────────────────────────────────────────────────────
@@ -1274,7 +1301,7 @@ function resetForm(){
   qtyC=1; document.getElementById("qty-val-c").textContent="1";
   pagoC=""; document.querySelectorAll("#section-combo .pago-opt").forEach(e=>e.classList.remove("sel"));
   // Renovación
-  ["renew-servicio","renew-opcion","renew-fecha","renew-tiempo"].forEach(id=>{
+  ["renew-servicio","renew-opcion","renew-fecha-d","renew-fecha-m","renew-fecha-a","renew-tiempo"].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value="";
   });
   document.getElementById("renew-opcion").style.display="none";

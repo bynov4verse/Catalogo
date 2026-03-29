@@ -556,7 +556,7 @@ select option{background:#1a1a2e;color:var(--text)}
           <input type="text" id="ref-nombre" placeholder="Nombre" style="margin-bottom:0">
           <input type="text" id="ref-apellido" placeholder="Apellido" style="margin-bottom:0">
         </div>
-        <input type="text" id="ref-telefono" placeholder="Teléfono (ej: +58412...)" inputmode="tel" style="margin-bottom:0">
+        <input type="text" id="ref-telefono" placeholder="Teléfono (ej: +58412...)" style="margin-bottom:0">
       </div>
     </div>
 
@@ -1082,27 +1082,46 @@ let TASA_P2P = 665.73;
 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3deWsX0aN3bPGnuA5XNRzk4f7GH_KjDmnfLPepiDT7pZW7vlCtfK7TDLMfqw0SbFvlw/exec";
 
-async function cargarTasas(){
+function cargarTasas(){
   const indicador = document.getElementById("tasa-live");
-  try {
-    const res = await fetch(APPS_SCRIPT_URL + "?action=tasas", {cache:"no-store", redirect:"follow"});
-    const data = await res.json();
-    if(data.ok){
+
+  // JSONP — único método sin restricciones CORS para Apps Script
+  window._tasasCallback = function(data){
+    // Limpiar script tag
+    const old = document.getElementById("jsonp-tasas");
+    if(old) old.remove();
+
+    if(data && data.ok){
       TASA_BCV = parseFloat(data.bcv) || TASA_BCV;
       TASA_P2P = parseFloat(data.p2p) || TASA_P2P;
       const vivo = data.fuente === "live";
       if(indicador){
-        indicador.innerHTML = `<span class="tasa-dot" style="background:${vivo?"var(--success)":"var(--purple)"};box-shadow:0 0 6px ${vivo?"var(--success)":"var(--purple)"};"></span>BCV Bs.${TASA_BCV.toFixed(2)} &nbsp;·&nbsp; P2P Bs.${TASA_P2P.toFixed(2)} &nbsp;·&nbsp; ${vivo?"en vivo":"última conocida"}`;
+        indicador.innerHTML = `<span class="tasa-dot" style="background:${vivo?"var(--success)":"var(--purple)"};box-shadow:0 0 6px ${vivo?"var(--success)":"var(--purple)"}"></span>BCV Bs.${TASA_BCV.toFixed(2)} &nbsp;·&nbsp; P2P Bs.${TASA_P2P.toFixed(2)} &nbsp;·&nbsp; ${vivo?"en vivo":"última conocida"}`;
         if(vivo){
           indicador.style.cssText += ";background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.3);color:var(--success)";
         }
       }
       recalcularPrecios();
+    } else {
+      if(indicador) indicador.innerHTML = `<span class="tasa-dot"></span>BCV Bs.${TASA_BCV.toFixed(2)} &nbsp;·&nbsp; P2P Bs.${TASA_P2P.toFixed(2)} &nbsp;·&nbsp; última conocida`;
     }
-  } catch(e){
-    console.warn("Apps Script no disponible, usando tasas fallback");
+  };
+
+  // Timeout por si el script no carga
+  const timeout = setTimeout(()=>{
+    const old = document.getElementById("jsonp-tasas");
+    if(old){ old.remove(); }
     if(indicador) indicador.innerHTML = `<span class="tasa-dot"></span>BCV Bs.${TASA_BCV.toFixed(2)} &nbsp;·&nbsp; P2P Bs.${TASA_P2P.toFixed(2)} &nbsp;·&nbsp; última conocida`;
-  }
+  }, 8000);
+
+  window._tasasCallback = (function(origFn){
+    return function(data){ clearTimeout(timeout); origFn(data); };
+  })(window._tasasCallback);
+
+  const script = document.createElement("script");
+  script.id  = "jsonp-tasas";
+  script.src = APPS_SCRIPT_URL + "?action=tasas&callback=_tasasCallback";
+  document.head.appendChild(script);
 }
 
 function recalcularPrecios(){

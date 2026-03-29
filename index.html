@@ -1061,6 +1061,14 @@ ${linea}
     ...refData
   });
 
+  // Agregar monto en Bs si el pago es Pago Móvil
+  if(pago === "Bs · Pago Móvil"){
+    const totalEl2 = mode==="i"?"ri-total":mode==="c"?"rc-total":"rr-total";
+    const montoUSD = parseFloat(document.getElementById(totalEl2).textContent.replace("$",""))||0;
+    const montoBs  = (montoUSD * TASA_BCV).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});
+    msg += `\n💵 *Equivalente en Bs:* Bs. ${montoBs} (tasa BCV ${TASA_BCV.toFixed(2)})`;
+  }
+
   window.open("https://wa.me/584221748922?text="+encodeURIComponent(msg),"_blank");
   // actualizar preview de puntos post-envío
   setTimeout(actualizarPtsPreview, 500);

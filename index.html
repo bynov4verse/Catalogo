@@ -1062,7 +1062,7 @@ ${linea}
   });
 
   // Agregar monto en Bs si el pago es Pago Móvil
-  if(pago === "Bs · Pago Móvil"){
+  if(pago.startsWith("Bs") && pago.includes("Pago") ){
     const totalEl2 = mode==="i"?"ri-total":mode==="c"?"rc-total":"rr-total";
     const montoUSD = parseFloat(document.getElementById(totalEl2).textContent.replace("$",""))||0;
     const montoBs  = (montoUSD * TASA_BCV).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});

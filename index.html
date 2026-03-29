@@ -908,6 +908,9 @@ function enviarWA(mode){
   const fecha_hoy=new Date().toLocaleDateString("es-VE",{day:"2-digit",month:"2-digit",year:"numeric"});
   const descDigital=esCripto(pago)?0.10:0;
 
+  const bsLine = (pago.startsWith("Bs") && pago.includes("Pago"))
+    ? (()=>{ const t=parseFloat(document.getElementById(mode==="i"?"ri-total":mode==="c"?"rc-total":"rr-total").textContent.replace("$",""))||0; const tasaUsada=TASA_BCV>1?TASA_BCV:468.51; return "\n🇻🇪 *Equivalente en Bs:* Bs. "+(t*tasaUsada).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2})+" (BCV "+tasaUsada.toFixed(2)+")"; })()
+    : "";
   if(mode==="i"){
     const svc=document.getElementById("servicio").value;
     if(!svc){alert("Por favor selecciona un servicio.");return}
@@ -941,7 +944,7 @@ ${linea}
 ⏱ *Duración:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 🔢 *Cantidad:* ${qtyI}
 ${linea}
-💰 *Total estimado:* ${total}
+💰 *Total estimado:* ${total}${bsLine}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Quedo en espera para proceder con el pago.
@@ -967,7 +970,7 @@ ${linea}
 📆 *Fecha de vencimiento:* ${fecha||"no indicada"}
 ⏱ *Renovación:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 ${linea}
-💰 *Total estimado:* ${total}
+💰 *Total estimado:* ${total}${bsLine}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Solicito renovación antes del vencimiento.
@@ -994,7 +997,7 @@ ${detalleItems}
 ⏱ *Duración:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 🔢 *Cantidad:* ${qtyC}
 ${linea}
-💰 *Total estimado:* ${total}
+💰 *Total estimado:* ${total}${bsLine}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Quedo en espera para proceder con el pago.
@@ -1015,7 +1018,7 @@ ${detalleItems}
 ⏱ *Duración:* ${meses} mes(es)${descLine.length?" · "+descLine.join(" + "):""}
 🔢 *Cantidad:* ${qtyC}
 ${linea}
-💰 *Total estimado:* ${total}
+💰 *Total estimado:* ${total}${bsLine}
 💳 *Método de pago:* ${pago}
 ${linea}
 ✅ Quedo en espera para proceder con el pago.
@@ -1060,14 +1063,6 @@ ${linea}
     pago:     pago,
     ...refData
   });
-
-  // Agregar monto en Bs si el pago es Pago Móvil
-  if(pago.startsWith("Bs") && pago.includes("Pago") ){
-    const totalEl2 = mode==="i"?"ri-total":mode==="c"?"rc-total":"rr-total";
-    const montoUSD = parseFloat(document.getElementById(totalEl2).textContent.replace("$",""))||0;
-    const montoBs  = (montoUSD * TASA_BCV).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});
-    msg += `\n💵 *Equivalente en Bs:* Bs. ${montoBs} (tasa BCV ${TASA_BCV.toFixed(2)})`;
-  }
 
   window.open("https://wa.me/584221748922?text="+encodeURIComponent(msg),"_blank");
   // actualizar preview de puntos post-envío
